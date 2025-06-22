@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        padding: 2rem;
+        max-width: 800px;
+        margin: auto;
+        background: #000000;
+        color: #ffffff;
+      }
+      h1 {
+        text-align: center;
+        font-size: 2rem;
+        color: #fcd34d;
+        margin-bottom: 2rem;
+      }
+      .question {
+        margin-bottom: 1rem;
+        background: #ffffff;
+        border: 1px solid #fcd34d;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        color: #000000;
+      }
+      label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1rem;
+      }
+      input[type='number'], input[type='text'], input[type='email'] {
+        width: 60%;
+        padding: 0.4rem;
+        font-size: 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+      }
+      button {
+        display: block;
+        margin: 2rem auto 0;
+        background-color: #fcd34d;
+        color: #000000;
+        font-size: 1rem;
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #facc15;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>PANAS Questionnaire</h1>
+    <form id="panasForm">
+      <div class="question">
+        <label>Full Name: <input type="text" name="Name" required></label>
+      </div>
+      <div class="question">
+        <label>Purdue Email: <input type="email" name="Email" pattern=".+@purdue\.edu" required></label>
+      </div>
+      <div id="questions"></div>
+      <button type="submit">Submit</button>
+    </form>
+
+    <script>
+      // 🔐 Replace with your own deployed Web App URL before running
+      const baseUrl = "YOUR_DEPLOYED_WEBAPP_URL_HERE";
+
+      const PANAS = [
+        { word: "Interested", type: "positive" }, { word: "Distressed", type: "negative" },
+        { word: "Excited", type: "positive" }, { word: "Upset", type: "negative" },
+        { word: "Strong", type: "positive" }, { word: "Guilty", type: "negative" },
+        { word: "Alert", type: "positive" }, { word: "Scared", type: "negative" },
+        { word: "Enthusiastic", type: "positive" }, { word: "Hostile", type: "negative" },
+        { word: "Proud", type: "positive" }, { word: "Irritable", type: "negative" },
+        { word: "Inspired", type: "positive" }, { word: "Ashamed", type: "negative" },
+        { word: "Determined", type: "positive" }, { word: "Nervous", type: "negative" },
+        { word: "Attentive", type: "positive" }, { word: "Jittery", type: "negative" },
+        { word: "Active", type: "positive" }, { word: "Afraid", type: "negative" }
+      ];
+
+      const container = document.getElementById("questions");
+      PANAS.forEach((item, i) => {
+        const div = document.createElement("div");
+        div.className = "question";
+        div.innerHTML = `<label>${item.word} (1–5): <input type="number" name="q${i}" min="1" max="5" required></label>`;
+        container.appendChild(div);
+      });
+
+      document.getElementById("panasForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const form = new FormData(e.target);
+        let positive = 0, negative = 0;
+        const data = {
+          Name: form.get("Name"),
+          Email: form.get("Email")
+        };
+
+        PANAS.forEach((item, i) => {
+          const val = parseInt(form.get("q" + i));
+          data[item.word] = val;
+          item.type === "positive" ? positive += val : negative += val;
+        });
+
+        let category = "";
+        if (positive >= 35 && negative <= 17 && negative >= 10) category = "Cheerleader";
+        else if (positive < 35 && positive >= 10 && negative >= 18) category = "Poet";
+        else if (positive >= 35 && negative >= 18) category = "Mad Scientist";
+        else if (positive >= 10 && positive <= 34 && negative >= 10 && negative <= 17) category = "Judge";
+        else category = "Invalid";
+
+        data["PositiveScore"] = positive;
+        data["NegativeScore"] = negative;
+        data["Category"] = category;
+
+        google.script.run
+          .withSuccessHandler(function(data) {
+            const url = `${baseUrl}?page=results&category=${encodeURIComponent(data.Category)}&name=${encodeURIComponent(data.Name)}&email=${encodeURIComponent(data.Email)}`;
+            window.open(url, '_blank');
+          })
+          .withFailureHandler(function(err) {
+            const name = encodeURIComponent(document.querySelector('input[name="Name"]').value);
+            const email = encodeURIComponent(document.querySelector('input[name="Email"]').value);
+            const fallbackUrl = `${baseUrl}?page=results&name=${name}&email=${email}&category=Unknown`;
+
+            if (err.message === "duplicate_submission") {
+              alert("You've already submitted. Opening results...");
+              window.open(fallbackUrl, '_blank');
+            } else {
+              alert("Something went wrong. Please try again later.");
+              console.error(err);
+            }
+          })
+          .recordResponse(data);
+      });
+    </script>
+  </body>
+</html>
