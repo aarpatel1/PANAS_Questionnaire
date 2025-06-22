@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        padding: 2rem;
+        max-width: 800px;
+        margin: auto;
+        background: #000000;
+        color: #ffffff;
+        text-align: center;
+      }
+      h1 {
+        font-size: 2rem;
+        color: #fcd34d;
+        margin-bottom: 2rem;
+      }
+      .result-box {
+        border: 1px solid #fcd34d;
+        background: #ffffff;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        font-size: 1.2rem;
+        color: #000000;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Your PANAS Results</h1>
+    <div class="result-box">
+      <strong><?= name ?></strong> (<?= email ?>)<br><br>
+      You are a <strong><?= category ?></strong>.<br><br>
+      Thanks for participating!
+    </div>
+  </body>
+</html>
